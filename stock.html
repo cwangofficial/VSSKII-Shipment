@@ -1,0 +1,1614 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VSSKII 庫存清點系統</title>
+    <script src="auth.js"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        :root {
+            --border-color: #000;
+            --font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .app-layout {
+            display: flex;
+            flex-direction: row;
+            align-items: flex-start;
+            gap: 20px;
+            max-width: 100%;
+            justify-content: center;
+        }
+
+        .left-panel {
+            width: 280px;
+            flex-shrink: 0;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 8px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .control-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .btn {
+            padding: 10px 16px;
+            cursor: pointer;
+            background: #000;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            font-family: var(--font-family);
+            font-size: 13px;
+            font-weight: 600;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background: #333;
+        }
+
+        .btn-secondary {
+            background: #666;
+        }
+
+        .btn-secondary:hover {
+            background: #555;
+        }
+
+        .btn-success {
+            background: #28a745;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .filter-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #111;
+        }
+
+        .filter-btn {
+            padding: 8px 12px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            font-family: var(--font-family);
+            font-size: 12px;
+            font-weight: 600;
+            transition: all 0.2s;
+            text-align: center;
+        }
+
+        .filter-btn:hover {
+            background: #f5f5f5;
+            border-color: #000;
+        }
+
+        .filter-btn.active {
+            background: #000;
+            color: white;
+            border-color: #000;
+        }
+
+        .search-section {
+            margin-top: 12px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 8px 10px;
+            border: 1px solid #bbb;
+            border-radius: 6px;
+            font-family: var(--font-family);
+            font-size: 13px;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: #000;
+        }
+
+        .stats-section {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 2px solid #ddd;
+        }
+
+        .stat-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .main-content {
+            flex: 1;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            max-width: 1000px;
+        }
+
+        .content-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .content-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: 2px;
+            color: #000;
+        }
+
+        .content-subtitle {
+            font-size: 14px;
+            color: #666;
+            margin-top: 8px;
+        }
+
+        .category-section {
+            margin-bottom: 30px;
+        }
+
+        .category-header {
+            background: #f2f2f2;
+            padding: 12px 15px;
+            border: 2px solid var(--border-color);
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .category-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .category-toggle {
+            font-size: 18px;
+            transition: transform 0.3s;
+            color: #000;
+        }
+
+        .category-toggle.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .subcategory-section {
+            margin-bottom: 20px;
+        }
+
+        .subcategory-header {
+            background: #fff;
+            padding: 10px 15px;
+            border-left: 4px solid #000;
+            border: 1px solid var(--border-color);
+            margin-bottom: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .product-table {
+            width: 100%;
+            border-collapse: collapse;
+            border: 2px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+
+        .product-table th,
+        .product-table td {
+            border: 1px solid var(--border-color);
+            padding: 8px 10px;
+            text-align: center;
+            font-size: 13px;
+        }
+
+        .product-table th {
+            background-color: #f2f2f2;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .product-table .col-code {
+            width: 10%;
+            font-weight: 700;
+            background: #fafafa;
+        }
+
+        .product-table .col-name {
+            width: 40%;
+            text-align: left;
+            padding-left: 12px;
+        }
+
+        .product-table .col-size {
+            width: 8%;
+            font-weight: 700;
+        }
+
+        .product-table .col-price {
+            width: 10%;
+        }
+
+        .product-table .col-qty {
+            width: 12%;
+        }
+
+        .qty-input {
+            width: 90%;
+            min-width: 70px;
+            padding: 6px 8px;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            text-align: center;
+            font-size: 14px;
+            font-weight: 700;
+            font-family: var(--font-family);
+        }
+
+        .qty-input:focus {
+            outline: none;
+            border-color: #000;
+            background: #fffde7;
+        }
+
+        .qty-input:disabled {
+            background: #f5f5f5;
+            color: #666;
+            cursor: not-allowed;
+            border-color: #ddd;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn:disabled:hover {
+            background: #000;
+            transform: none;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .edit-mode-banner {
+            background: #fff3cd;
+            border: 2px solid #ffc107;
+            border-radius: 6px;
+            padding: 12px 15px;
+            margin-bottom: 12px;
+            text-align: center;
+            font-weight: 700;
+            color: #856404;
+            font-size: 13px;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.8;
+            }
+        }
+
+        .qty-input:not(:disabled) {
+            border-color: #ffc107;
+            background: #fffef5;
+        }
+
+        .qty-input:not(:disabled):focus {
+            border-color: #000;
+            background: #fffde7;
+        }
+
+        /* 確保輸入框在平板也能容納 4 位數 */
+        @media (max-width: 1024px) {
+            .qty-input {
+                min-width: 75px;
+            }
+        }
+
+        /* 響應式表格（手機版改用卡片式） */
+        @media (max-width: 640px) {
+            .subcategory-section {
+                padding-left: 0;
+            }
+            
+            .product-table {
+                border: none;
+                margin-bottom: 10px;
+            }
+            
+            .product-table thead {
+                display: none;
+            }
+            
+            .product-table tbody {
+                display: block;
+            }
+            
+            .product-table tbody tr {
+                display: block;
+                margin-bottom: 12px;
+                border: 2px solid var(--border-color);
+                border-radius: 6px;
+                padding: 12px;
+                background: #fafafa;
+                position: relative;
+            }
+            
+            .product-table tbody tr:before {
+                content: attr(data-product-code) ' - ' attr(data-product-name);
+                display: block;
+                font-weight: 700;
+                font-size: 13px;
+                color: #000;
+                margin-bottom: 10px;
+                padding-bottom: 10px;
+                border-bottom: 1px solid #ddd;
+            }
+            
+            .product-table tbody td {
+                border: none;
+                padding: 8px 0;
+                text-align: left;
+                display: grid;
+                grid-template-columns: 80px 1fr;
+                gap: 10px;
+                align-items: center;
+            }
+            
+            .product-table tbody td:before {
+                content: attr(data-label);
+                font-weight: 700;
+                font-size: 12px;
+                color: #666;
+            }
+            
+            .product-table .col-code,
+            .product-table .col-name {
+                display: none;
+            }
+            
+            .product-table .col-size:before {
+                content: '尺寸';
+            }
+            
+            .product-table .col-price:before {
+                content: '單價';
+            }
+            
+            .product-table .col-qty:before {
+                content: '庫存數量';
+            }
+            
+            .product-table .col-size,
+            .product-table .col-price {
+                font-weight: 600;
+                font-size: 14px;
+            }
+            
+            .qty-input {
+                width: 100%;
+                min-width: 80px;
+                padding: 10px;
+                font-size: 16px;
+            }
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #999;
+        }
+
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        .empty-state-text {
+            font-size: 16px;
+        }
+
+        /* 版本紀錄彈窗 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            width: 90%;
+            max-width: 800px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+        }
+
+        .modal-header {
+            padding: 20px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #000;
+        }
+
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 0;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #666;
+        }
+
+        .modal-close:hover {
+            color: #000;
+        }
+
+        .modal-body {
+            padding: 20px;
+            overflow-y: auto;
+            flex: 1;
+        }
+
+        .modal-footer {
+            padding: 15px 20px;
+            border-top: 2px solid var(--border-color);
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+
+        .snapshot-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .snapshot-item {
+            border: 2px solid var(--border-color);
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.2s;
+        }
+
+        .snapshot-item:hover {
+            border-color: #000;
+            background: #f9f9f9;
+        }
+
+        .snapshot-info {
+            flex: 1;
+        }
+
+        .snapshot-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #000;
+            margin-bottom: 5px;
+        }
+
+        .snapshot-meta {
+            font-size: 12px;
+            color: #666;
+        }
+
+        .snapshot-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-small {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+        }
+
+        .btn-info:hover {
+            background: #138496;
+        }
+
+        .create-snapshot-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 700;
+            color: #333;
+        }
+
+        .form-input {
+            padding: 8px 12px;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            font-family: var(--font-family);
+            font-size: 13px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #000;
+        }
+
+        .form-textarea {
+            padding: 8px 12px;
+            border: 1px solid #bbb;
+            border-radius: 4px;
+            font-family: var(--font-family);
+            font-size: 13px;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #000;
+        }
+
+        .status-message {
+            padding: 10px 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            font-size: 13px;
+        }
+
+        .status-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .status-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .status-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #000;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .left-panel {
+                display: none !important;
+            }
+            .app-layout {
+                justify-content: center;
+            }
+            .main-content {
+                box-shadow: none;
+                max-width: 100%;
+            }
+            .product-table {
+                break-inside: avoid;
+            }
+        }
+
+        /* 平板裝置 (橫向) */
+        @media (max-width: 1200px) {
+            .app-layout {
+                gap: 15px;
+            }
+            
+            .left-panel {
+                width: 260px;
+            }
+        }
+
+        /* 平板裝置 (直向) */
+        @media (max-width: 1024px) {
+            body {
+                padding: 10px;
+            }
+            
+            .app-layout {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .left-panel {
+                width: 100%;
+                max-width: 100%;
+            }
+            
+            .main-content {
+                max-width: 100%;
+                width: 100%;
+            }
+            
+            .control-buttons {
+                flex-direction: row;
+                flex-wrap: wrap;
+            }
+            
+            .control-buttons .btn {
+                flex: 1;
+                min-width: 140px;
+            }
+            
+            .filter-section {
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 8px;
+            }
+            
+            .filter-label {
+                grid-column: 1 / -1;
+            }
+        }
+
+        /* 手機裝置 */
+        @media (max-width: 768px) {
+            body {
+                padding: 5px;
+            }
+            
+            .left-panel {
+                padding: 12px;
+            }
+            
+            .panel-title {
+                font-size: 15px;
+            }
+            
+            .control-buttons .btn {
+                font-size: 12px;
+                padding: 8px 12px;
+                min-width: 110px;
+            }
+            
+            .filter-btn {
+                font-size: 11px;
+                padding: 6px 10px;
+            }
+            
+            .search-input {
+                font-size: 12px;
+                padding: 8px 10px;
+            }
+            
+            .stat-item {
+                margin-bottom: 6px;
+            }
+            
+            .stat-label {
+                font-size: 11px;
+            }
+            
+            .stat-value {
+                font-size: 14px;
+            }
+            
+            .main-content {
+                padding: 15px;
+            }
+            
+            .content-title {
+                font-size: 20px;
+            }
+            
+            .content-subtitle {
+                font-size: 12px;
+            }
+            
+            .category-title {
+                font-size: 16px;
+            }
+            
+            .subcategory-header {
+                font-size: 14px;
+                padding: 10px 15px;
+            }
+            
+            .product-table {
+                font-size: 12px;
+            }
+            
+            .product-table th,
+            .product-table td {
+                padding: 6px 8px;
+                font-size: 12px;
+            }
+            
+            .product-table .col-name {
+                font-size: 11px;
+            }
+            
+            .qty-input {
+                min-width: 72px;
+                padding: 5px 6px;
+                font-size: 13px;
+            }
+            
+            .modal-content {
+                width: 95%;
+                max-height: 90vh;
+            }
+            
+            .modal-header {
+                padding: 15px;
+            }
+            
+            .modal-title {
+                font-size: 16px;
+            }
+            
+            .modal-body {
+                padding: 15px;
+            }
+            
+            .create-snapshot-form {
+                padding: 12px;
+            }
+            
+            .snapshot-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 12px;
+                padding: 12px;
+            }
+            
+            .snapshot-actions {
+                width: 100%;
+            }
+            
+            .snapshot-actions .btn-small {
+                flex: 1;
+            }
+        }
+
+        /* 小型手機 */
+        @media (max-width: 480px) {
+            .control-buttons {
+                gap: 6px;
+            }
+            
+            .control-buttons .btn {
+                font-size: 11px;
+                padding: 7px 10px;
+                min-width: 90px;
+            }
+            
+            .edit-mode-banner {
+                font-size: 11px;
+                padding: 8px 10px;
+            }
+            
+            .filter-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .content-title {
+                font-size: 18px;
+                letter-spacing: 1px;
+            }
+            
+            .category-header {
+                padding: 10px 12px;
+            }
+            
+            .category-title {
+                font-size: 15px;
+            }
+            
+            .subcategory-header {
+                font-size: 13px;
+                padding: 8px 12px;
+            }
+            
+            .product-table {
+                font-size: 11px;
+            }
+            
+            .product-table th,
+            .product-table td {
+                padding: 5px 6px;
+                font-size: 11px;
+            }
+            
+            .product-table .col-code {
+                width: 12%;
+            }
+            
+            .product-table .col-name {
+                width: 35%;
+                font-size: 10px;
+            }
+            
+            .product-table .col-size {
+                width: 12%;
+            }
+            
+            .product-table .col-price {
+                width: 15%;
+            }
+            
+            .product-table .col-qty {
+                width: 26%;
+            }
+            
+            .qty-input {
+                width: 95%;
+                min-width: 68px;
+                padding: 6px 5px;
+                font-size: 13px;
+            }
+            
+            .modal-content {
+                width: 98%;
+                max-height: 95vh;
+                border-radius: 4px;
+            }
+            
+            .snapshot-name {
+                font-size: 14px;
+            }
+            
+            .snapshot-meta {
+                font-size: 11px;
+            }
+        }
+
+        /* 極小螢幕 */
+        @media (max-width: 360px) {
+            body {
+                padding: 3px;
+            }
+            
+            .left-panel {
+                padding: 10px;
+            }
+            
+            .main-content {
+                padding: 10px;
+            }
+            
+            .control-buttons .btn {
+                font-size: 10px;
+                padding: 6px 8px;
+                min-width: 75px;
+            }
+            
+            .content-title {
+                font-size: 16px;
+            }
+            
+            .product-table th,
+            .product-table td {
+                padding: 4px 5px;
+                font-size: 10px;
+            }
+            
+            .product-table .col-name {
+                font-size: 9px;
+            }
+            
+            .qty-input {
+                min-width: 70px;
+                padding: 7px 5px;
+                font-size: 14px;
+            }
+        }
+
+        /* 橫向模式優化 */
+        @media (max-height: 600px) and (orientation: landscape) {
+            .left-panel {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            
+            .main-content {
+                max-height: 90vh;
+                overflow-y: auto;
+            }
+            
+            .modal-content {
+                max-height: 85vh;
+            }
+        }
+
+        /* 觸控裝置優化 */
+        @media (hover: none) and (pointer: coarse) {
+            .btn,
+            .filter-btn,
+            .category-header,
+            .snapshot-item {
+                min-height: 44px;
+            }
+            
+            .search-input,
+            .qty-input,
+            .form-input,
+            .form-textarea {
+                min-height: 44px;
+                font-size: 16px;
+            }
+            
+            .qty-input {
+                min-width: 80px;
+                padding: 10px 8px;
+            }
+            
+            .filter-btn {
+                padding: 10px 12px;
+            }
+            
+            .category-header {
+                padding: 14px 15px;
+            }
+        }
+
+        /* 超寬螢幕優化 */
+        @media (min-width: 1600px) {
+            .main-content {
+                max-width: 1200px;
+            }
+            
+            .product-table {
+                font-size: 15px;
+            }
+            
+            .product-table th,
+            .product-table td {
+                padding: 10px 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div id="app">
+    <div class="app-layout">
+        <div class="left-panel">
+            <div class="panel-title">庫存清點系統</div>
+            
+            <div class="control-buttons">
+                <button class="btn" 
+                        :class="{ 'btn-success': !isEditMode, 'btn-danger': isEditMode }"
+                        @click="toggleEditMode">
+                    <span v-if="!isEditMode">🔒 開啟修改模式</span>
+                    <span v-else>🔓 關閉修改模式</span>
+                </button>
+                <button class="btn btn-success" @click="saveToLocal" :disabled="!isEditMode">
+                    💾 儲存資料
+                </button>
+                <button class="btn btn-secondary" @click="exportData">匯出 CSV</button>
+                <button class="btn" @click="printStock">列印清單</button>
+                <button class="btn" @click="goToMain" style="background: #007bff;">前往出貨單</button>
+                <button class="btn btn-secondary" @click="backToMain">返回主選單</button>
+            </div>
+
+            <div class="edit-mode-banner" v-if="isEditMode">
+                ⚠️ 修改模式已啟用
+            </div>
+
+            <div class="filter-section">
+                <div class="filter-label">篩選類別</div>
+                <button class="filter-btn" 
+                        :class="{ active: filterCategory === 'all' }"
+                        @click="filterCategory = 'all'">
+                    全部
+                </button>
+                <button class="filter-btn" 
+                        :class="{ active: filterCategory === 'male' }"
+                        @click="filterCategory = 'male'">
+                    男款
+                </button>
+                <button class="filter-btn" 
+                        :class="{ active: filterCategory === 'female' }"
+                        @click="filterCategory = 'female'">
+                    女款
+                </button>
+                <button class="filter-btn" 
+                        :class="{ active: filterCategory === 'kids' }"
+                        @click="filterCategory = 'kids'">
+                    小童款
+                </button>
+                <button class="filter-btn" 
+                        :class="{ active: filterCategory === 'autumn_winter' }"
+                        @click="filterCategory = 'autumn_winter'">
+                    秋冬款
+                </button>
+            </div>
+
+            <div class="search-section">
+                <div class="filter-label">搜尋商品</div>
+                <input type="text" 
+                       class="search-input" 
+                       v-model="searchQuery"
+                       placeholder="輸入商品名稱或編號">
+            </div>
+
+            <div class="stats-section">
+                <div class="stat-item">
+                    <div class="stat-label">清點日期</div>
+                    <div class="stat-value">{{ currentDate }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">總品項數</div>
+                    <div class="stat-value">{{ totalProducts }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">總庫存數</div>
+                    <div class="stat-value">{{ totalStockQty }}</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-label">已清點</div>
+                    <div class="stat-value">{{ countedProducts }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <div class="content-header">
+                <div class="content-title">庫存清點表</div>
+                <div class="content-subtitle">請輸入各品項尺寸的庫存數量</div>
+            </div>
+
+            <div class="category-section" v-for="category in filteredCategories" :key="category.id">
+                <div class="category-header" @click="toggleCategory(category.id)">
+                    <div class="category-title">{{ category.name }}</div>
+                    <div class="category-toggle" :class="{ collapsed: !category.expanded }">▼</div>
+                </div>
+
+                <div v-if="category.expanded">
+                    <div class="subcategory-section" v-for="subcategory in category.subcategories" :key="subcategory.id">
+                        <div class="subcategory-header">{{ subcategory.name }}</div>
+                        
+                        <table class="product-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-code">編號</th>
+                                    <th class="col-name">商品名稱</th>
+                                    <th class="col-size">尺寸</th>
+                                    <th class="col-price">單價</th>
+                                    <th class="col-qty">庫存數量</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <template v-for="product in subcategory.products" :key="product.code">
+                                    <tr v-for="(price, size, index) in product.prices" 
+                                        :key="product.code + '_' + size"
+                                        :data-product-code="product.code"
+                                        :data-product-name="product.name">
+                                        <td class="col-code" 
+                                            v-if="index === 0" 
+                                            :rowspan="Object.keys(product.prices).length">
+                                            {{ product.code }}
+                                        </td>
+                                        <td class="col-name" 
+                                            v-if="index === 0" 
+                                            :rowspan="Object.keys(product.prices).length">
+                                            {{ product.name }}
+                                        </td>
+                                        <td class="col-size">{{ size }}</td>
+                                        <td class="col-price">{{ price }}</td>
+                                        <td class="col-qty">
+                                            <input type="number" 
+                                                   class="qty-input" 
+                                                   v-model.number="stockData[product.code + '_' + size]"
+                                                   min="0"
+                                                   max="9999"
+                                                   placeholder="0"
+                                                   :disabled="!isEditMode"
+                                                   :aria-label="product.code + ' ' + size + ' 庫存數量'">
+                                        </td>
+                                    </tr>
+                                </template>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div class="empty-state" v-if="filteredCategories.length === 0">
+                <div class="empty-state-icon">🔍</div>
+                <div class="empty-state-text">找不到符合的商品</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 版本紀錄彈窗 -->
+</div>
+
+<script>
+    const { createApp, ref, computed } = Vue;
+
+    createApp({
+        setup() {
+            const STORAGE_KEY = 'vsskii_stock_data';
+
+            const formatDate = (date) => {
+                const y = date.getFullYear();
+                const m = String(date.getMonth() + 1).padStart(2, '0');
+                const d = String(date.getDate()).padStart(2, '0');
+                return `${y}/${m}/${d}`;
+            };
+
+            const currentDate = ref(formatDate(new Date()));
+            const filterCategory = ref('all');
+            const searchQuery = ref('');
+            const stockData = ref({});
+            const isEditMode = ref(false);
+
+            const categories = ref([
+                {
+                    id: 'male',
+                    name: '男款系列',
+                    expanded: true,
+                    subcategories: [
+                        {
+                            id: 'classic_male',
+                            name: '經典款',
+                            products: [
+                                { code: '1A', name: '20支100%精梳棉T恤(經典男款/白色)', 
+                                  prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
+                                { code: '1B', name: '20支100%精梳棉T恤(經典男款/黑色)', 
+                                  prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
+                                { code: '1C', name: '20支100%精梳棉T恤(經典男款/綠色)', 
+                                  prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
+                                { code: '1D', name: '20支100%精梳棉T恤(經典男款/綠色)', 
+                                  prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
+                                { code: '1E', name: '20支100%精梳棉T恤(經典男款/莫蘭迪藍色)', 
+                                  prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
+                                { code: '1F', name: '20支101%精梳棉T恤(經典男款/水泥灰)', 
+                                  prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } }
+                            ]
+                        },
+                        {
+                            id: 'heavyweight_male',
+                            name: '重磅款',
+                            products: [
+                                { code: '7A', name: '16支100%精梳棉(重磅款男款/白色)', 
+                                  prices: { S: 399, M: 399, L: 399, XL: 399, '2XL': 399, '3XL': 399 } },
+                                { code: '7B', name: '16支100%精梳棉(重磅款男款/黑色)', 
+                                  prices: { S: 399, M: 399, L: 399, XL: 399, '2XL': 399, '3XL': 399 } }
+                            ]
+                        },
+                        {
+                            id: 'logo_male',
+                            name: 'LOGO款',
+                            products: [
+                                { code: '4A', name: '20支100%精梳棉T恤(經典LOGO男款/白色)', 
+                                  prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
+                                { code: '4B', name: '20支100%精梳棉T恤(經典LOGO男款/黑色)', 
+                                  prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } }
+                            ]
+                        },
+                        {
+                            id: 'dopamine_male',
+                            name: '多巴胺款',
+                            products: [
+                                { code: '5A', name: '20支100%精梳棉T恤(經典多巴胺款男款/白色黑)', 
+                                  prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
+                                { code: '5B', name: '20支100%精梳棉T恤(經典多巴胺款男款/白色綠)', 
+                                  prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
+                                { code: '5C', name: '20支100%精梳棉T恤(經典多巴胺款男款/白色粉)', 
+                                  prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
+                                { code: '6A', name: '20支100%精梳棉T恤(經典多巴胺款男款/黑色白)', 
+                                  prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
+                                { code: '6B', name: '20支100%精梳棉T恤(經典多巴胺款男款/黑色綠)', 
+                                  prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
+                                { code: '6C', name: '20支100%精梳棉T恤(經典多巴胺款男款/黑色粉)', 
+                                  prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } }
+                            ]
+                        },
+                        {
+                            id: 'steel_print_male',
+                            name: '鋼印款',
+                            products: [
+                                { code: '12A', name: '16支100%精梳棉T恤(經典鋼印男款/白色)', 
+                                  prices: { S: 449, M: 449, L: 449, XL: 449, '2XL': 449, '3XL': 449 } },
+                                { code: '12B', name: '16支100%精梳棉T恤(經典鋼印男款/黑色)', 
+                                  prices: { S: 449, M: 449, L: 449, XL: 449, '2XL': 449, '3XL': 449 } }
+                            ]
+                        },
+                        {
+                            id: 'big_size_male',
+                            name: '大尺碼款',
+                            products: [
+                                { code: '11A', name: '大尺碼經典款-男款素面T/白色', 
+                                  prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
+                                { code: '11B', name: '大尺碼經典款-男款素面T/黑色', 
+                                  prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'female',
+                    name: '女款系列',
+                    expanded: true,
+                    subcategories: [
+                        {
+                            id: 'classic_female',
+                            name: '經典款',
+                            products: [
+                                { code: '2A', name: '20支100%精梳棉T恤(經典女款/白色)', 
+                                  prices: { M: 199, L: 199, XL: 199 } },
+                                { code: '2B', name: '20支100%精梳棉T恤(經典女款/黑色)', 
+                                  prices: { M: 199, L: 199, XL: 199 } }
+                            ]
+                        },
+                        {
+                            id: 'heavyweight_female',
+                            name: '重磅款',
+                            products: [
+                                { code: '8A', name: '16支100%精梳棉(重磅款女款/白色)', 
+                                  prices: { M: 399, L: 399, XL: 399 } },
+                                { code: '8B', name: '16支100%精梳棉(重磅款女款/黑色)', 
+                                  prices: { M: 399, L: 399, XL: 399 } }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'kids',
+                    name: '小童款系列',
+                    expanded: true,
+                    subcategories: [
+                        {
+                            id: 'classic_kids',
+                            name: '經典款',
+                            products: [
+                                { code: '3A', name: '20支100%精梳棉(經典小童款/白色)', 
+                                  prices: { '120': 169, '130': 169, '140': 169 } },
+                                { code: '3B', name: '20支101%精梳棉(經典小童款/黑色)', 
+                                  prices: { '120': 169, '130': 169, '140': 169 } }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'autumn_winter',
+                    name: '秋冬款系列',
+                    expanded: true,
+                    subcategories: [
+                        {
+                            id: 'college_tee',
+                            name: '大學T',
+                            products: [
+                                { code: '9A', name: '30支580克重磅100%精梳棉落肩(大學T款/黑色)', 
+                                  prices: { S: 680, M: 680, L: 680, XL: 680, '2XL': 680 } },
+                                { code: '9B', name: '30支580克重磅100%精梳棉落肩(大學T款/灰色)', 
+                                  prices: { S: 680, M: 680, L: 680, XL: 680, '2XL': 680 } }
+                            ]
+                        },
+                        {
+                            id: 'hoodie',
+                            name: '帽T',
+                            products: [
+                                { code: '10A', name: '30支580克重磅100%精梳棉落肩(帽T款/黑色)', 
+                                  prices: { S: 880, M: 880, L: 880, XL: 880, '2XL': 880 } },
+                                { code: '10B', name: '30支580克重磅100%精梳棉落肩(帽T款/灰色)', 
+                                  prices: { S: 880, M: 880, L: 880, XL: 880, '2XL': 880 } }
+                            ]
+                        }
+                    ]
+                }
+            ]);
+
+            const toggleCategory = (categoryId) => {
+                const category = categories.value.find(c => c.id === categoryId);
+                if (category) {
+                    category.expanded = !category.expanded;
+                }
+            };
+
+            const filteredCategories = computed(() => {
+                let filtered = categories.value;
+
+                if (filterCategory.value !== 'all') {
+                    filtered = filtered.filter(cat => cat.id === filterCategory.value);
+                }
+
+                if (searchQuery.value.trim()) {
+                    const query = searchQuery.value.toLowerCase();
+                    filtered = filtered.map(cat => {
+                        const filteredSubcategories = cat.subcategories.map(sub => {
+                            const filteredProducts = sub.products.filter(prod => 
+                                prod.code.toLowerCase().includes(query) || 
+                                prod.name.toLowerCase().includes(query)
+                            );
+                            return { ...sub, products: filteredProducts };
+                        }).filter(sub => sub.products.length > 0);
+
+                        return { ...cat, subcategories: filteredSubcategories };
+                    }).filter(cat => cat.subcategories.length > 0);
+                }
+
+                return filtered;
+            });
+
+            const totalProducts = computed(() => {
+                return categories.value.reduce((sum, cat) => {
+                    return sum + cat.subcategories.reduce((subSum, sub) => {
+                        return subSum + sub.products.length;
+                    }, 0);
+                }, 0);
+            });
+
+            const totalStockQty = computed(() => {
+                return Object.values(stockData.value).reduce((sum, qty) => {
+                    return sum + (parseInt(qty) || 0);
+                }, 0);
+            });
+
+            const countedProducts = computed(() => {
+                const countedSet = new Set();
+                Object.keys(stockData.value).forEach(key => {
+                    if (stockData.value[key] && parseInt(stockData.value[key]) > 0) {
+                        const productCode = key.split('_')[0];
+                        countedSet.add(productCode);
+                    }
+                });
+                return countedSet.size;
+            });
+
+            const showMessage = (text, type = 'info') => {
+                statusMessage.value = { text, type };
+                setTimeout(() => {
+                    statusMessage.value = { text: '', type: '' };
+                }, 5000);
+            };
+
+            const toggleEditMode = () => {
+                if (isEditMode.value) {
+                    if (confirm('確定要關閉修改模式嗎？\n未儲存的變更將會保留在頁面上，但不會儲存到資料庫。')) {
+                        isEditMode.value = false;
+                    }
+                } else {
+                    isEditMode.value = true;
+                }
+            };
+
+            const saveToLocal = () => {
+                if (!isEditMode.value) {
+                    alert('請先開啟修改模式才能儲存');
+                    return;
+                }
+                
+                try {
+                    localStorage.setItem(STORAGE_KEY, JSON.stringify(stockData.value));
+                    alert('✓ 資料已成功儲存！');
+                    isEditMode.value = false;
+                } catch (error) {
+                    console.error('儲存錯誤:', error);
+                    alert('✗ 儲存失敗：' + error.message);
+                }
+            };
+
+            const loadFromLocal = () => {
+                try {
+                    const saved = localStorage.getItem(STORAGE_KEY);
+                    if (saved) {
+                        stockData.value = JSON.parse(saved);
+                    }
+                } catch (error) {
+                    console.error('載入錯誤:', error);
+                }
+            };
+
+            const exportData = () => {
+                const exportLines = ['商品編號,商品名稱,尺寸,價格,庫存數量'];
+                
+                categories.value.forEach(cat => {
+                    cat.subcategories.forEach(sub => {
+                        sub.products.forEach(prod => {
+                            Object.entries(prod.prices).forEach(([size, price]) => {
+                                const key = prod.code + '_' + size;
+                                const qty = stockData.value[key] || 0;
+                                exportLines.push(`${prod.code},"${prod.name}",${size},${price},${qty}`);
+                            });
+                        });
+                    });
+                });
+
+                const csvContent = exportLines.join('\n');
+                const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+                const link = document.createElement('a');
+                const url = URL.createObjectURL(blob);
+                link.setAttribute('href', url);
+                link.setAttribute('download', `VSSKII_庫存清點_${currentDate.value.replace(/\//g, '')}.csv`);
+                link.style.visibility = 'hidden';
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+
+            const printStock = () => {
+                window.print();
+            };
+
+            const backToMain = () => {
+                window.location.href = 'index.html';
+            };
+
+            const goToMain = () => {
+                window.location.href = 'main.html';
+            };
+
+            loadFromLocal();
+
+            return {
+                currentDate,
+                filterCategory,
+                searchQuery,
+                stockData,
+                categories,
+                filteredCategories,
+                totalProducts,
+                totalStockQty,
+                countedProducts,
+                isEditMode,
+                toggleCategory,
+                toggleEditMode,
+                saveToLocal,
+                exportData,
+                printStock,
+                backToMain,
+                goToMain
+            };
+        }
+    }).mount('#app');
+</script>
+
+</body>
+</html>

@@ -3,569 +3,345 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VSSKII 出貨單系統</title>
+    <title>VSSKII 系統登入</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <style>
         :root {
             --border-color: #000;
             --font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif;
         }
+
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: var(--font-family);
             background-color: #f4f4f4;
             margin: 0;
-            padding: 20px;
-        }
-        /* 主版面：左側控制欄、中間出貨單、右側商品選擇 */
-        .app-layout {
-            display: flex;
-            flex-direction: row;
-            align-items: flex-start;
-            gap: 20px;
-            max-width: 100%;
-            justify-content: center;
-        }
-        /* 左側區域：包含控制面板和刪除按鈕 */
-        .left-side {
-            display: flex;
-            flex-direction: row;
-            gap: 10px;
-            align-items: flex-start;
-        }
-        /* 左側刪除按鈕欄 */
-        .left-controls {
-            width: 60px;
-            flex-shrink: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 0;
-            padding-top: 0;
-            margin-top: 0;
-        }
-        .left-controls-spacer {
-            height: 340px;
-        }
-        .delete-row-btn {
-            height: 38px;
+            padding: 0;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
         }
-        /* A4 紙張設定 */
-        .print-area {
-            width: 210mm;
-            min-height: 297mm;
-            padding: 15mm;
-            margin: 0;
+
+        .login-container {
+            width: 100%;
+            max-width: 500px;
             background: white;
+            border-radius: 8px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
-            box-sizing: border-box;
-            position: relative;
-            flex-shrink: 0;
-        }
-        /* 控制面板：右側、每項一行 */
-        .controls {
-            width: 280px;
-            flex-shrink: 0;
-            background: #fff;
-            padding: 15px;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            align-items: stretch;
-        }
-        .control-buttons {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            padding-bottom: 12px;
-            margin-bottom: 12px;
-            border-bottom: 2px solid #ddd;
-        }
-        .control-fields {
-            display: flex;
-            flex-direction: column;
-            gap: 22px;
-        }
-        .control-field--compact {
-            margin-top: -10px;
-        }
-        .control-field {
-            display: flex;
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 8px;
-            width: 100%;
-        }
-        .control-field--row {
-            flex-direction: row;
-            align-items: center;
-        }
-        .control-field .control-label {
-            flex-shrink: 0;
-            min-width: 70px;
-        }
-        .control-field--stacked {
-            flex-direction: column;
-            align-items: flex-start;
-        }
-        .control-field--full {
-            width: 100%;
-        }
-        .control-label {
-            font-size: 13px;
-            font-weight: 700;
-            color: #111;
-            white-space: nowrap;
-        }
-        .control-input {
-            font-family: var(--font-family);
-            font-size: 13px;
-            border: 1px solid #bbb;
-            border-radius: 6px;
-            padding: 6px 10px;
-            width: 100%;
-            max-width: 100%;
-            box-sizing: border-box;
-            outline: none;
-        }
-        .control-input:focus {
-            border-color: #000;
-        }
-        .control-input--narrow {
-            width: 3cm;
-            max-width: 3cm;
-        }
-        button {
-            padding: 8px 16px;
-            cursor: pointer;
-            background: #000;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            font-family: var(--font-family);
-        }
-        /* 出貨單結構 */
-        .header-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            border: 2px solid var(--border-color);
-            margin-top: 0;
-            box-sizing: border-box;
-        }
-        .info-box {
-            padding: 10px;
-            font-size: 14px;
-            line-height: 1.6;
-            text-align: left;
-        }
-        .info-box:first-child { border-right: 1px solid var(--border-color); }
-        .info-box input {
-            text-align: left;
-        }
-
-        .doc-header {
-            width: 100%;
-            position: relative;
-        }
-        .doc-title {
-            text-align: center;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: 2px;
-        }
-        .total-qty-badge {
-            position: absolute;
-            top: 0;
-            left: 0;
-            font-size: 24px;
-            font-weight: 700;
-            color: #000;
-        }
-        .logo-row {
-            width: 100%;
-            text-align: center;
-            margin: 6px 0 0 0;
-            padding: 12px 0 8px 0;
-            background-color: #000;
-            border: 2px solid var(--border-color);
-            border-bottom: 2px solid var(--border-color);
-            box-sizing: border-box;
-        }
-        .logo {
-            margin: 0;
-            display: inline-block;
-            padding-top: 8px;
-        }
-        .logo img {
-            display: block;
-            max-width: 100%;
-            width: 160px;
-            height: auto;
-        }
-        
-        /* 表格樣式 */
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            border: 2px solid var(--border-color);
-            margin-top: 10px;
-            box-sizing: border-box;
-        }
-        th, td {
-            border: 1px solid var(--border-color);
-            padding: 6px 8px;
-            text-align: center;
-            font-size: 14px;
-            vertical-align: middle;
-        }
-        thead th {
-            background-color: #f2f2f2;
-            font-weight: 700;
-        }
-        .col-index { width: 8%; text-align: center; font-weight: 700; }
-        .col-name { text-align: left; width: 52%; }
-        .col-qty { width: 8%; }
-        .col-price { width: 10%; text-align: center; }
-        .col-total { width: 12%; }
-        .col-check { width: 10%; }
-
-        .input-field {
-            width: 90%;
-            border: none;
-            outline: none;
-            font-size: 14px;
-            font-family: var(--font-family);
-            background-color: transparent;
-            text-align: center;
-        }
-        .input-field:focus { background: #fffde7; }
-
-        .delete-btn {
-            padding: 6px 8px;
-            font-size: 11px;
-            background: #dc3545;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-        }
-        .delete-btn:hover {
-            background: #c82333;
-        }
-        .add-item-btn {
-            padding: 6px 8px;
-            font-size: 11px;
-            background: #28a745;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            width: 100%;
-        }
-        .add-item-btn:hover {
-            background: #218838;
-        }
-
-        /* 配送方式：按鈕式選擇 */
-        .segmented {
-            display: inline-flex;
-            vertical-align: middle;
-            gap: 0;
-            border: 1px solid var(--border-color);
-            border-radius: 6px;
             overflow: hidden;
-            margin-left: 0;
+            margin: 20px;
         }
-        .segmented input[type="radio"] {
-            position: absolute;
-            opacity: 0;
-            pointer-events: none;
-        }
-        .segmented label {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4px 10px;
-            font-size: 13px;
-            cursor: pointer;
-            user-select: none;
-            background: #fff;
-            color: #000;
-            border-right: 1px solid var(--border-color);
-            white-space: nowrap;
-        }
-        .segmented label:last-child { border-right: none; }
-        .segmented label.active {
+
+        .login-header {
             background: #000;
-            color: #fff;
-        }
-
-        /* 底部統計 */
-        .footer-row td { text-align: right; padding-right: 20px; }
-        .label-text { font-weight: 700; }
-
-        /* 商品選擇區 */
-        .product-selector {
-            margin-top: 20px;
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            border: 1px solid #ddd;
-        }
-        .product-selector-title {
-            font-size: 15px;
-            font-weight: 700;
-            margin-bottom: 12px;
-            color: #111;
-        }
-        .product-step {
-            margin-bottom: 15px;
-        }
-        .product-step-label {
-            font-size: 13px;
-            font-weight: 700;
-            margin-bottom: 8px;
-            color: #333;
-        }
-        .product-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 8px;
-        }
-        .product-option {
-            padding: 8px 12px;
-            font-size: 12px;
-            background: #fff;
-            border: 1px solid #bbb;
-            border-radius: 6px;
-            cursor: pointer;
+            color: white;
+            padding: 40px 30px;
             text-align: center;
-            transition: all 0.2s;
-        }
-        .product-option:hover {
-            background: #f5f5f5;
-            border-color: #000;
-        }
-        .product-option.active {
-            background: #000;
-            color: #fff;
-            border-color: #000;
-        }
-        .product-detail-item {
-            padding: 6px 10px;
-            font-size: 12px;
-            background: #fff;
-            border: 1px solid #bbb;
-            border-radius: 6px;
-            cursor: pointer;
-            text-align: left;
-            transition: all 0.2s;
-            margin-bottom: 6px;
-        }
-        .product-detail-item:hover {
-            background: #f5f5f5;
-            border-color: #000;
-        }
-        .product-detail-item.active {
-            background: #000;
-            color: #fff;
-            border-color: #000;
-        }
-        .product-code {
-            font-weight: 700;
-            color: #666;
-            margin-right: 8px;
-        }
-        .product-detail-item.active .product-code {
-            color: #fff;
-        }
-        .size-grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 6px;
-        }
-        .size-option {
-            padding: 6px;
-            font-size: 12px;
-            background: #fff;
-            border: 1px solid #bbb;
-            border-radius: 4px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s;
-        }
-        .size-option:hover {
-            background: #f5f5f5;
-            border-color: #000;
-        }
-        .size-option.active {
-            background: #000;
-            color: #fff;
-            border-color: #000;
-        }
-        .qty-input {
-            width: 100%;
-            padding: 8px;
-            font-size: 13px;
-            border: 1px solid #bbb;
-            border-radius: 6px;
-            text-align: center;
-            font-family: var(--font-family);
-            box-sizing: border-box;
-        }
-        .add-product-btn {
-            width: 100%;
-            padding: 10px;
-            font-size: 13px;
-            background: #000;
-            color: #fff;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 700;
-        }
-        .add-product-btn:hover {
-            background: #333;
-        }
-        .reset-selection-btn {
-            padding: 6px 12px;
-            font-size: 11px;
-            background: #666;
-            color: #fff;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            margin-top: 8px;
         }
 
-        /* 數量選擇按鈕 */
-        .qty-button-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 6px;
-        }
-        .qty-btn {
-            padding: 10px;
-            font-size: 13px;
-            background: #fff;
-            color: #000;
-            border: 1px solid #bbb;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 700;
-            transition: all 0.2s;
-        }
-        .qty-btn:hover {
-            background: #f5f5f5;
-            border-color: #000;
-        }
-        .qty-btn.active {
-            background: #000;
-            color: #fff;
-            border-color: #000;
+        .logo-container {
+            margin: 0;
         }
 
-        /* 數字鍵盤彈窗 */
-        .numpad-container {
-            margin-top: 15px;
-            padding: 15px;
-            background: #f9f9f9;
-            border-radius: 8px;
-            border: 1px solid #ddd;
+        .logo-container img {
+            width: 200px;
+            height: auto;
+            display: inline-block;
         }
-        .numpad-title {
+
+        .login-body {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
             font-size: 14px;
             font-weight: 700;
-            margin-bottom: 10px;
-            color: #111;
+            color: #333;
+            margin-bottom: 8px;
         }
-        .numpad-display {
+
+        .form-input {
             width: 100%;
-            padding: 12px;
-            font-size: 20px;
-            text-align: right;
-            border: 2px solid #000;
+            padding: 12px 15px;
+            border: 2px solid #ddd;
             border-radius: 6px;
-            margin-bottom: 12px;
-            font-weight: 700;
-            background: #fff;
-            box-sizing: border-box;
-            color: #000;
+            font-family: var(--font-family);
+            font-size: 15px;
+            transition: all 0.3s;
         }
-        .numpad-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 10px;
-            margin-bottom: 10px;
+
+        .form-input:focus {
+            outline: none;
+            border-color: #000;
+            background: #f9f9f9;
         }
-        .numpad-btn {
-            padding: 15px;
+
+        .form-input:hover {
+            border-color: #999;
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: #000;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-family: var(--font-family);
             font-size: 16px;
             font-weight: 700;
-            background: #fff;
-            border: 2px solid #000;
-            border-radius: 6px;
             cursor: pointer;
-            transition: all 0.2s;
-            color: #000;
+            transition: all 0.3s;
+            margin-top: 10px;
         }
-        .numpad-btn:hover {
-            background: #f5f5f5;
+
+        .login-btn:hover {
+            background: #333;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
         }
-        .numpad-btn:active {
-            background: #e0e0e0;
+
+        .login-btn:active {
+            transform: translateY(0);
         }
-        .numpad-actions {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 10px;
-        }
-        .numpad-action-btn {
-            padding: 12px;
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+            padding: 12px 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
             font-size: 13px;
+            text-align: center;
+        }
+
+        .system-selection {
+            padding: 40px 30px;
+            background: #f9f9f9;
+        }
+
+        .system-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .system-btn {
+            padding: 25px 20px;
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .system-btn:hover {
+            border-color: #000;
+            background: #f5f5f5;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .system-btn-icon {
+            font-size: 48px;
+            margin-bottom: 12px;
+        }
+
+        .system-btn-title {
+            font-size: 20px;
             font-weight: 700;
+            color: #000;
+            margin: 0;
+        }
+
+        .logout-btn {
+            width: 100%;
+            padding: 10px;
+            background: #666;
+            color: white;
             border: none;
             border-radius: 6px;
+            font-family: var(--font-family);
+            font-size: 14px;
+            font-weight: 600;
             cursor: pointer;
+            margin-top: 20px;
         }
-        .numpad-clear {
-            background: #dc3545;
-            color: #000;
+
+        .logout-btn:hover {
+            background: #555;
         }
-        .numpad-confirm {
-            background: #28a745;
+
+        .password-toggle {
+            position: relative;
+        }
+
+        .toggle-icon {
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 18px;
+            color: #666;
+            user-select: none;
+        }
+
+        .toggle-icon:hover {
             color: #000;
         }
 
-        /* 列印優化 */
-        @page {
-            size: A4 portrait;
-            margin: 0;
-        }
-        @media print {
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
-            color-adjust: exact;
-        }
-        @media print {
-            .controls, .btn-add, .left-controls, .left-side, .product-selector { display: none !important; }
-            body { background: #fff; padding: 0; margin: 0; }
-            .app-layout { justify-content: center; }
-            .print-area {
-                box-shadow: none;
-                margin: 0 auto;
-                width: 210mm;
-                min-height: 297mm;
+        /* 平板裝置 */
+        @media (max-width: 768px) {
+            .login-container {
+                margin: 15px;
             }
-            .input-field { border: none !important; }
-            thead th { background: #fff !important; }
-            .logo-row {
-                background-color: #000 !important;
-                -webkit-print-color-adjust: exact;
-                print-color-adjust: exact;
+            
+            .system-selection {
+                padding: 30px 20px;
+            }
+            
+            .system-btn {
+                padding: 22px 18px;
+            }
+
+            .system-btn-icon {
+                font-size: 44px;
+            }
+            
+            .system-btn-title {
+                font-size: 18px;
+            }
+        }
+
+        /* 手機裝置 */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+            
+            .login-container {
+                margin: 0;
+                border-radius: 0;
+            }
+            
+            .login-header {
+                padding: 25px 15px;
+            }
+            
+            .logo-container img {
+                width: 160px;
+            }
+            
+            .login-body {
+                padding: 25px 20px;
+            }
+            
+            .system-selection {
+                padding: 25px 15px;
+            }
+            
+            .selection-title {
+                font-size: 16px;
+            }
+            
+            .system-btn {
+                padding: 20px 15px;
+            }
+            
+            .system-btn-icon {
+                font-size: 40px;
+            }
+            
+            .system-btn-title {
+                font-size: 17px;
+            }
+        }
+
+        /* 小型手機 */
+        @media (max-width: 360px) {
+            .login-header {
+                padding: 25px 10px;
+            }
+            
+            .logo-container img {
+                width: 140px;
+            }
+            
+            .login-body {
+                padding: 20px 15px;
+            }
+            
+            .form-input {
+                padding: 10px 12px;
+                font-size: 14px;
+            }
+            
+            .login-btn {
+                padding: 12px;
+                font-size: 15px;
+            }
+        }
+
+        /* 觸控裝置優化 */
+        @media (hover: none) and (pointer: coarse) {
+            .form-input {
+                min-height: 48px;
+                font-size: 16px;
+                padding: 14px 15px;
+            }
+            
+            .login-btn,
+            .system-btn,
+            .logout-btn {
+                min-height: 48px;
+            }
+            
+            .toggle-icon {
+                font-size: 22px;
+                padding: 10px;
+            }
+        }
+
+        /* 橫向模式（手機橫放） */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .login-header {
+                padding: 20px 30px;
+            }
+            
+            .logo-container {
+                margin-bottom: 10px;
+            }
+            
+            .logo-container img {
+                width: 120px;
+            }
+            
+            .login-body,
+            .system-selection {
+                padding: 25px 30px;
+            }
+            
+            .form-group {
+                margin-bottom: 15px;
+            }
+        }
+
+        /* 超寬螢幕 */
+        @media (min-width: 1200px) {
+            .login-container {
+                max-width: 550px;
             }
         }
     </style>
@@ -573,695 +349,173 @@
 <body>
 
 <div id="app">
-    <div class="app-layout">
-        <div class="left-side">
-            <div class="controls">
-                <div class="control-buttons">
-                    <button type="button" @click="handlePrint">列印/匯出 PDF</button>
-                    <button @click="resetData" style="background: #666;">清空重新輸入</button>
-                </div>
-                <div class="control-fields">
-                    <div class="control-field control-field--row">
-                        <span class="control-label">日期微調</span>
-                        <button @click="prevDate" style="background: #fff; color: #000; border: 1px solid #000; padding: 4px 10px; font-size: 12px;">上一天</button>
-                        <button @click="nextDate" style="background: #fff; color: #000; border: 1px solid #000; padding: 4px 10px; font-size: 12px;">下一天</button>
-                    </div>
-                    <div class="control-field">
-                        <span class="control-label">帳戶資訊</span>
-                        <input class="control-input" v-model="customer.id" placeholder="請輸入帳戶資訊">
-                    </div>
-                    <div class="control-field">
-                        <span class="control-label">出貨編號</span>
-                        <input class="control-input" v-model="order.id" placeholder="請輸入出貨編號">
-                    </div>
-                    <div class="control-field">
-                        <span class="control-label">運費</span>
-                        <input type="number" class="control-input control-input--narrow" v-model.number="summary.shippingFee" placeholder="0">
-                    </div>
-                    <div class="control-field control-field--compact">
-                        <span class="control-label">扣蝦幣</span>
-                        <input class="control-input control-input--narrow" v-model="summary.coinDisk" placeholder="0元">
-                    </div>
-                    <div class="control-field control-field--compact">
-                        <span class="control-label">賣場優惠券</span>
-                        <input class="control-input control-input--narrow" v-model="summary.coupon" placeholder="0元">
-                    </div>
-                    <div class="control-field control-field--compact">
-                        <span class="control-label">優惠券</span>
-                        <input class="control-input control-input--narrow" v-model="summary.promo" placeholder="0元">
-                    </div>
-                    <div class="control-field">
-                        <span class="control-label">出貨系統</span>
-                        <span class="segmented" role="radiogroup" aria-label="出貨系統">
-                            <label :class="{ active: order.system === '蝦皮' }">
-                                <input type="radio" value="蝦皮" v-model="order.system">蝦皮
-                            </label>
-                            <label :class="{ active: order.system === '酷澎' }">
-                                <input type="radio" value="酷澎" v-model="order.system">酷澎
-                            </label>
-                            <label :class="{ active: order.system === '樂天' }">
-                                <input type="radio" value="樂天" v-model="order.system">樂天
-                            </label>
-                            <label :class="{ active: order.system === '賣貨便' }">
-                                <input type="radio" value="賣貨便" v-model="order.system">賣貨便
-                            </label>
-                        </span>
-                    </div>
-                    <div class="control-field">
-                        <span class="control-label">配送方式</span>
-                        <span class="segmented" role="radiogroup" aria-label="配送方式">
-                            <label :class="{ active: customer.shipping === '蝦皮店到店' }">
-                                <input type="radio" value="蝦皮店到店" v-model="customer.shipping">蝦皮店到店
-                            </label>
-                            <label :class="{ active: customer.shipping === '7-11 便利商店' }">
-                                <input type="radio" value="7-11 便利商店" v-model="customer.shipping">7-11
-                            </label>
-                            <label :class="{ active: customer.shipping === '全家 便利商店' }">
-                                <input type="radio" value="全家 便利商店" v-model="customer.shipping">全家
-                            </label>
-                            <label :class="{ active: customer.shipping === 'OK 便利商店' }">
-                                <input type="radio" value="OK 便利商店" v-model="customer.shipping">OK
-                            </label>
-                            <label :class="{ active: customer.shipping === '萊爾富 便利商店' }">
-                                <input type="radio" value="萊爾富 便利商店" v-model="customer.shipping">萊爾富
-                            </label>
-                        </span>
-                    </div>
-                    <div class="control-field">
-                        <span class="control-label">地址來源</span>
-                        <span class="segmented" role="radiogroup" aria-label="地址來源">
-                            <label :class="{ active: addressMode === 'same' }">
-                                <input type="radio" value="same" v-model="addressMode">同出貨選項
-                            </label>
-                            <label :class="{ active: addressMode === 'manual' }">
-                                <input type="radio" value="manual" v-model="addressMode">手動輸入
-                            </label>
-                        </span>
-                    </div>
-                    <div class="control-field" v-if="addressMode === 'manual'">
-                        <span class="control-label">手動輸入</span>
-                        <input class="control-input" v-model="customer.address" placeholder="如有需要可在此輸入詳細地址或門市資訊">
-                    </div>
-                    <div class="control-field control-field--full">
-                        <span class="control-label">付款資訊</span>
-                        <span class="segmented" role="radiogroup" aria-label="付款資訊">
-                            <label :class="{ active: customer.payment === '信用卡' }">
-                                <input type="radio" value="信用卡" v-model="customer.payment">信用卡
-                            </label>
-                            <label :class="{ active: customer.payment === '貨到付款' }">
-                                <input type="radio" value="貨到付款" v-model="customer.payment">貨到付款
-                            </label>
-                        </span>
-                    </div>
-                </div>
-            </div>
-            <div class="left-controls">
-                <div class="left-controls-spacer"></div>
-                <div class="delete-row-btn" v-for="(item, index) in items" :key="'del-' + index">
-                    <button class="delete-btn" @click="deleteItem(index)">刪除</button>
-                </div>
-                <div class="delete-row-btn">
-                    <button class="add-item-btn" @click="addItem">新增</button>
-                </div>
-            </div>
-        </div>
-        <div class="print-area">
-        <div class="doc-header">
-            <div class="total-qty-badge">{{ totalQty }}</div>
-            <div class="doc-title">出貨單</div>
-            <div class="logo-row">
-                <div class="logo">
+    <div class="login-container">
+        <!-- 登入畫面 -->
+        <div v-if="!isLoggedIn">
+            <div class="login-header">
+                <div class="logo-container">
                     <img src="logo.png" alt="VSSKII LOGO">
                 </div>
             </div>
-        </div>
-        <div class="header-container">
-            <div class="info-box">
-                <strong>帳戶資訊</strong>：<input class="input-field" style="width: 70%" v-model="customer.id"><br>
-                <strong>連絡電話</strong>：<input class="input-field" style="width: 70%" v-model="customer.phone"><br>
-                <strong>配送方式</strong>：<input class="input-field" style="width: 70%" v-model="customer.shipping" readonly><br>
-                <strong>配送地址</strong>：<input class="input-field" style="width: 70%" :value="addressDisplay" readonly><br>
-                <strong>付款方式</strong>：<input class="input-field" style="width: 70%" v-model="customer.payment" readonly>
+
+            <div class="login-body">
+                <div class="error-message" v-if="errorMessage">
+                    {{ errorMessage }}
+                </div>
+
+                <form @submit.prevent="handleLogin">
+                    <div class="form-group">
+                        <label class="form-label">帳號</label>
+                        <input type="text" 
+                               class="form-input" 
+                               v-model="username"
+                               placeholder="請輸入帳號"
+                               autocomplete="username"
+                               ref="usernameInput"
+                               required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">密碼</label>
+                        <div class="password-toggle">
+                            <input :type="showPassword ? 'text' : 'password'" 
+                                   class="form-input" 
+                                   v-model="password"
+                                   placeholder="請輸入密碼"
+                                   autocomplete="current-password"
+                                   inputmode="numeric"
+                                   pattern="[0-9]*"
+                                   required>
+                            <span class="toggle-icon" @click="showPassword = !showPassword">
+                                {{ showPassword ? '👁️' : '👁️‍🗨️' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="login-btn">登入系統</button>
+                </form>
             </div>
-            <div class="info-box">
-                <strong>出貨編號</strong>：<input class="input-field" style="width: 60%" v-model="order.id"><br>
-                <strong>出貨日期</strong>：<input class="input-field" style="width: 60%" v-model="order.date"><br>
-                <strong>出貨系統</strong>：<input class="input-field" style="width: 50%" v-model="order.system">
+        </div>
+
+        <!-- 系統選擇畫面 -->
+        <div v-if="isLoggedIn">
+            <div class="login-header">
+                <div class="logo-container">
+                    <img src="logo.png" alt="VSSKII LOGO">
+                </div>
             </div>
-        </div>
 
-        <table>
-            <thead>
-                <tr>
-                    <th class="col-index">品項</th>
-                    <th class="col-name">商品名稱</th>
-                    <th class="col-qty">數量</th>
-                    <th class="col-price">單價</th>
-                    <th class="col-total">總計</th>
-                    <th class="col-check">出貨</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr v-for="(item, index) in items" :key="index">
-                    <td class="col-index">{{ item.code || '' }}</td>
-                    <td class="col-name"><input class="input-field" v-model="item.name" style="text-align: left;"></td>
-                    <td><input type="number" class="input-field" v-model.number="item.qty"></td>
-                    <td class="col-price">{{ item.price || '' }}</td>
-                    <td>{{ item.qty * item.price }}</td>
-                    <td><input type="checkbox" :checked="item.name && item.name.trim() !== ''" :disabled="!item.name || item.name.trim() === ''"></td>
-                </tr>
-                <tr class="footer-row">
-                    <td colspan="4" class="label-text">運費：</td>
-                    <td>{{ summary.shippingFee }}</td>
-                    <td></td>
-                </tr>
-                <tr class="footer-row">
-                    <td colspan="2" style="text-align: left; padding-left: 10px; font-size: 11px;">
-                        <span v-if="summary.coinDisk && summary.coinDisk !== '0' && summary.coinDisk !== '0元'">扣蝦幣：{{ summary.coinDisk }}　</span>
-                        <span v-if="summary.coupon && summary.coupon !== '0' && summary.coupon !== '0元'">扣賣場優惠券：{{ summary.coupon }}　</span>
-                        <span v-if="summary.promo && summary.promo !== '0' && summary.promo !== '0元'">扣優惠券：{{ summary.promo }}</span>
-                    </td>
-                    <td colspan="2" class="label-text">帳單總計：</td>
-                    <td style="font-weight: bold; color: red;">{{ totalAmount }}</td>
-                    <td></td>
-                </tr>
-                <tr class="footer-row">
-                    <td colspan="4" class="label-text">總數量：</td>
-                    <td>{{ totalQty }}</td>
-                    <td></td>
-                </tr>
-            </tbody>
-        </table>
-        </div>
+            <div class="system-selection">
+                <div class="system-buttons">
+                    <div class="system-btn" @click="goToMain">
+                        <div class="system-btn-icon">📦</div>
+                        <div class="system-btn-title">出貨單系統</div>
+                    </div>
 
-        <div class="controls">
-            <div class="product-selector">
-                <div class="product-selector-title">商品選擇區</div>
-                
-                <div class="product-step">
-                    <div class="product-step-label">步驟 1: 選擇類別</div>
-                    <div class="product-grid">
-                        <div class="product-option" 
-                             :class="{ active: selectedMainCategory === 'male' }"
-                             @click="selectMainCategory('male')">
-                            男款
-                        </div>
-                        <div class="product-option" 
-                             :class="{ active: selectedMainCategory === 'female' }"
-                             @click="selectMainCategory('female')">
-                            女款
-                        </div>
-                        <div class="product-option" 
-                             :class="{ active: selectedMainCategory === 'kids' }"
-                             @click="selectMainCategory('kids')">
-                            小童款
-                        </div>
-                        <div class="product-option" 
-                             :class="{ active: selectedMainCategory === 'autumn_winter' }"
-                             @click="selectMainCategory('autumn_winter')">
-                            秋冬款
-                        </div>
-                        <div class="product-option" 
-                             :class="{ active: selectedMainCategory === 'socks' }"
-                             @click="selectMainCategory('socks')">
-                            襪款
-                        </div>
+                    <div class="system-btn" @click="goToStock">
+                        <div class="system-btn-icon">📊</div>
+                        <div class="system-btn-title">庫存清點系統</div>
                     </div>
                 </div>
 
-                <div class="product-step" v-if="selectedMainCategory">
-                    <div class="product-step-label">步驟 2: 選擇款式</div>
-                    <div class="product-grid">
-                        <div class="product-option"
-                             v-for="style in availableStyles"
-                             :key="style.key"
-                             :class="{ active: selectedStyle === style.key }"
-                             @click="selectStyle(style.key)">
-                            {{ style.label }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-step" v-if="selectedStyle">
-                    <div class="product-step-label">步驟 3: 選擇商品</div>
-                    <div class="product-detail-item"
-                         v-for="product in availableProducts"
-                         :key="product.code"
-                         :class="{ active: selectedProduct && selectedProduct.code === product.code }"
-                         @click="selectProduct(product)">
-                        <span>{{ getDisplayName(product.name) }}</span>
-                    </div>
-                </div>
-
-                <div class="product-step" v-if="selectedProduct">
-                    <div class="product-step-label">步驟 4: 選擇尺寸</div>
-                    <div class="size-grid">
-                        <div class="size-option"
-                             v-for="size in availableSizes"
-                             :key="size"
-                             :class="{ active: selectedSize === size }"
-                             @click="selectedSize = size">
-                            {{ size }}
-                        </div>
-                    </div>
-                </div>
-
-                <div class="product-step" v-if="selectedSize">
-                    <div class="product-step-label">步驟 5: 選擇數量</div>
-                    <div class="qty-button-grid">
-                        <button class="qty-btn" 
-                                :class="{ active: selectedQty === 1 }"
-                                @click="selectedQty = 1">1</button>
-                        <button class="qty-btn" 
-                                :class="{ active: selectedQty === 2 }"
-                                @click="selectedQty = 2">2</button>
-                        <button class="qty-btn" 
-                                :class="{ active: selectedQty === 3 }"
-                                @click="selectedQty = 3">3</button>
-                        <button class="qty-btn" 
-                                :class="{ active: selectedQty === 4 }"
-                                @click="selectedQty = 4">4</button>
-                        <button class="qty-btn" 
-                                :class="{ active: selectedQty === 5 }"
-                                @click="selectedQty = 5">5</button>
-                        <button class="qty-btn" 
-                                :class="{ active: showNumpad }"
-                                @click="openNumpad">手動輸入</button>
-                    </div>
-                </div>
-
-                <div class="numpad-container" v-if="showNumpad">
-                    <div class="numpad-title">輸入數量</div>
-                    <div class="numpad-display">{{ numpadValue || '0' }}</div>
-                    <div class="numpad-grid">
-                        <button class="numpad-btn" @click="numpadInput('1')">1</button>
-                        <button class="numpad-btn" @click="numpadInput('2')">2</button>
-                        <button class="numpad-btn" @click="numpadInput('3')">3</button>
-                        <button class="numpad-btn" @click="numpadInput('4')">4</button>
-                        <button class="numpad-btn" @click="numpadInput('5')">5</button>
-                        <button class="numpad-btn" @click="numpadInput('6')">6</button>
-                        <button class="numpad-btn" @click="numpadInput('7')">7</button>
-                        <button class="numpad-btn" @click="numpadInput('8')">8</button>
-                        <button class="numpad-btn" @click="numpadInput('9')">9</button>
-                        <button class="numpad-btn" @click="numpadBackspace">←</button>
-                        <button class="numpad-btn" @click="numpadInput('0')">0</button>
-                        <button class="numpad-btn" @click="numpadClear">C</button>
-                    </div>
-                    <div class="numpad-actions">
-                        <button class="numpad-action-btn numpad-clear" @click="closeNumpad">取消</button>
-                        <button class="numpad-action-btn numpad-confirm" @click="confirmNumpad">確認</button>
-                    </div>
-                </div>
-
-                <div class="product-step" v-if="selectedQty > 0">
-                    <button class="add-product-btn" @click="addProductToOrder">加入訂單</button>
-                    <button class="reset-selection-btn" @click="resetProductSelection">重新選擇</button>
-                </div>
+                <button class="logout-btn" @click="handleLogout">登出</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    const { createApp, ref, computed } = Vue;
+    const { createApp, ref, onMounted } = Vue;
 
     createApp({
         setup() {
-            const formatDate = (date) => {
-                const y = date.getFullYear();
-                const m = String(date.getMonth() + 1).padStart(2, '0');
-                const d = String(date.getDate()).padStart(2, '0');
-                return `${y}/${m}/${d}`;
-            };
+            const username = ref('');
+            const password = ref('');
+            const showPassword = ref(false);
+            const isLoggedIn = ref(false);
+            const currentUser = ref('');
+            const errorMessage = ref('');
+            const usernameInput = ref(null);
 
-            const customer = ref({ id: '', phone: '', shipping: '蝦皮店到店', address: '', payment: '貨到付款' });
-            const order = ref({ id: '', date: formatDate(new Date()), system: '蝦皮' });
-            const items = ref([
-                { code: '', name: '', qty: 0, price: 0 },
-                { code: '', name: '', qty: 0, price: 0 },
-                { code: '', name: '', qty: 0, price: 0 },
-                { code: '', name: '', qty: 0, price: 0 },
-                { code: '', name: '', qty: 0, price: 0 }
-            ]);
-            const summary = ref({ shippingFee: 0, coinDisk: '0', coupon: '0', promo: '0' });
-            const addressMode = ref('same');
+            const VALID_USERNAME = 'admin';
+            const VALID_PASSWORD = '0000';
+            const SESSION_KEY = 'vsskii_session';
 
-            const products = ref({
-                classic_male: [
-                    { code: '1A', name: '20支100%精梳棉T恤(經典男款/白色)', 
-                      prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
-                    { code: '1B', name: '20支100%精梳棉T恤(經典男款/黑色)', 
-                      prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
-                    { code: '1C', name: '20支100%精梳棉T恤(經典男款/綠色)', 
-                      prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
-                    { code: '1D', name: '20支100%精梳棉T恤(經典男款/綠色)', 
-                      prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
-                    { code: '1E', name: '20支100%精梳棉T恤(經典男款/莫蘭迪藍色)', 
-                      prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
-                    { code: '1F', name: '20支101%精梳棉T恤(經典男款/水泥灰)', 
-                      prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } }
-                ],
-                classic_female: [
-                    { code: '2A', name: '20支100%精梳棉T恤(經典女款/白色)', 
-                      prices: { M: 199, L: 199, XL: 199 } },
-                    { code: '2B', name: '20支100%精梳棉T恤(經典女款/黑色)', 
-                      prices: { M: 199, L: 199, XL: 199 } }
-                ],
-                classic_kids: [
-                    { code: '3A', name: '20支100%精梳棉(經典小童款/白色)', 
-                      prices: { '120': 169, '130': 169, '140': 169 } },
-                    { code: '3B', name: '20支101%精梳棉(經典小童款/黑色)', 
-                      prices: { '120': 169, '130': 169, '140': 169 } }
-                ],
-                classic_logo: [
-                    { code: '4A', name: '20支100%精梳棉T恤(經典LOGO男款/白色)', 
-                      prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
-                    { code: '4B', name: '20支100%精梳棉T恤(經典LOGO男款/黑色)', 
-                      prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } }
-                ],
-                dopamine: [
-                    { code: '5A', name: '20支100%精梳棉T恤(經典多巴胺款男款/白色黑)', 
-                      prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
-                    { code: '5B', name: '20支100%精梳棉T恤(經典多巴胺款男款/白色綠)', 
-                      prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
-                    { code: '5C', name: '20支100%精梳棉T恤(經典多巴胺款男款/白色粉)', 
-                      prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
-                    { code: '6A', name: '20支100%精梳棉T恤(經典多巴胺款男款/黑色白)', 
-                      prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
-                    { code: '6B', name: '20支100%精梳棉T恤(經典多巴胺款男款/黑色綠)', 
-                      prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } },
-                    { code: '6C', name: '20支100%精梳棉T恤(經典多巴胺款男款/黑色粉)', 
-                      prices: { S: 249, M: 249, L: 249, XL: 249, '2XL': 249, '3XL': 249, '4XL': 249, '5XL': 249 } }
-                ],
-                heavyweight: [
-                    { code: '7A', name: '16支100%精梳棉(重磅款男款/白色)', 
-                      prices: { S: 399, M: 399, L: 399, XL: 399, '2XL': 399, '3XL': 399 } },
-                    { code: '7B', name: '16支100%精梳棉(重磅款男款/黑色)', 
-                      prices: { S: 399, M: 399, L: 399, XL: 399, '2XL': 399, '3XL': 399 } },
-                    { code: '8A', name: '16支100%精梳棉(重磅款女款/白色)', 
-                      prices: { M: 399, L: 399, XL: 399 } },
-                    { code: '8B', name: '16支100%精梳棉(重磅款女款/黑色)', 
-                      prices: { M: 399, L: 399, XL: 399 } }
-                ],
-                sweatshirt: [
-                    { code: '9A', name: '30支580克重磅100%精梳棉落肩(大學T款/黑色)', 
-                      prices: { S: 680, M: 680, L: 680, XL: 680, '2XL': 680 } },
-                    { code: '9B', name: '30支580克重磅100%精梳棉落肩(大學T款/灰色)', 
-                      prices: { S: 680, M: 680, L: 680, XL: 680, '2XL': 680 } },
-                    { code: '10A', name: '30支580克重磅100%精梳棉落肩(帽T款/黑色)', 
-                      prices: { S: 880, M: 880, L: 880, XL: 880, '2XL': 880 } },
-                    { code: '10B', name: '30支580克重磅100%精梳棉落肩(帽T款/灰色)', 
-                      prices: { S: 880, M: 880, L: 880, XL: 880, '2XL': 880 } }
-                ],
-                special: [
-                    { code: '11A', name: '大尺碼經典款-男款素面T/白色', 
-                      prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
-                    { code: '11B', name: '大尺碼經典款-男款素面T/黑色', 
-                      prices: { S: 199, M: 199, L: 199, XL: 199, '2XL': 199, '3XL': 249, '4XL': 259, '5XL': 269 } },
-                    { code: '12A', name: '16支100%精梳棉T恤(經典鋼印男款/白色)', 
-                      prices: { S: 449, M: 449, L: 449, XL: 449, '2XL': 449, '3XL': 449 } },
-                    { code: '12B', name: '16支100%精梳棉T恤(經典鋼印男款/黑色)', 
-                      prices: { S: 449, M: 449, L: 449, XL: 449, '2XL': 449, '3XL': 449 } }
-                ]
-            });
-
-            const selectedMainCategory = ref('');
-            const selectedStyle = ref('');
-            const selectedProduct = ref(null);
-            const selectedSize = ref('');
-            const selectedQty = ref(0);
-            const showNumpad = ref(false);
-            const numpadValue = ref('');
-
-            const styleMapping = {
-                male: [
-                    { key: 'classic_male', label: '經典款' },
-                    { key: 'heavyweight_male', label: '重磅款' },
-                    { key: 'classic_logo', label: 'LOGO款' },
-                    { key: 'steel_print', label: '鋼印款' },
-                    { key: 'dopamine', label: '多巴胺款' },
-                    { key: 'big_size', label: '大尺碼' }
-                ],
-                female: [
-                    { key: 'classic_female', label: '經典款' },
-                    { key: 'heavyweight_female', label: '重磅款' }
-                ],
-                kids: [
-                    { key: 'classic_kids', label: '經典款' }
-                ],
-                autumn_winter: [
-                    { key: 'college_tee', label: '大學T' },
-                    { key: 'hoodie', label: '帽T' }
-                ],
-                socks: [
-                    { key: 'classic_socks', label: '經典款' },
-                    { key: 'sport_socks', label: '運動款' }
-                ]
-            };
-
-            const productMapping = {
-                classic_male: 'classic_male',
-                heavyweight_male: 'heavyweight',
-                classic_logo: 'classic_logo',
-                steel_print: 'special',
-                dopamine: 'dopamine',
-                big_size: 'special',
-                classic_kids: 'classic_kids',
-                classic_female: 'classic_female',
-                heavyweight_female: 'heavyweight',
-                college_tee: 'sweatshirt',
-                hoodie: 'sweatshirt',
-                classic_socks: [],
-                sport_socks: []
-            };
-
-            const availableStyles = computed(() => {
-                if (!selectedMainCategory.value) return [];
-                return styleMapping[selectedMainCategory.value] || [];
-            });
-
-            const availableProducts = computed(() => {
-                if (!selectedStyle.value) return [];
-                const categoryKey = productMapping[selectedStyle.value];
-                if (!categoryKey || !products.value[categoryKey]) return [];
-                
-                let filteredProducts = products.value[categoryKey];
-                
-                if (selectedStyle.value === 'heavyweight_male') {
-                    filteredProducts = filteredProducts.filter(p => p.code.startsWith('7'));
-                } else if (selectedStyle.value === 'heavyweight_female') {
-                    filteredProducts = filteredProducts.filter(p => p.code.startsWith('8'));
-                } else if (selectedStyle.value === 'steel_print') {
-                    filteredProducts = filteredProducts.filter(p => p.code.startsWith('12'));
-                } else if (selectedStyle.value === 'big_size') {
-                    filteredProducts = filteredProducts.filter(p => p.code.startsWith('11'));
-                } else if (selectedStyle.value === 'college_tee') {
-                    filteredProducts = filteredProducts.filter(p => p.code.startsWith('9'));
-                } else if (selectedStyle.value === 'hoodie') {
-                    filteredProducts = filteredProducts.filter(p => p.code.startsWith('10'));
-                }
-                
-                return filteredProducts;
-            });
-
-            const availableSizes = computed(() => {
-                if (!selectedProduct.value || !selectedProduct.value.prices) return [];
-                return Object.keys(selectedProduct.value.prices);
-            });
-
-            const selectMainCategory = (category) => {
-                selectedMainCategory.value = category;
-                selectedStyle.value = '';
-                selectedProduct.value = null;
-                selectedSize.value = '';
-                selectedQty.value = 0;
-            };
-
-            const selectStyle = (style) => {
-                selectedStyle.value = style;
-                selectedProduct.value = null;
-                selectedSize.value = '';
-                selectedQty.value = 0;
-            };
-
-            const selectProduct = (product) => {
-                selectedProduct.value = product;
-                selectedSize.value = '';
-                selectedQty.value = 0;
-            };
-
-            const getDisplayName = (fullName) => {
-                const match = fullName.match(/\(([^)]+)\)/);
-                if (!match) return fullName;
-                
-                let displayName = match[1];
-                
-                if (displayName.includes('多巴胺款男款/')) {
-                    displayName = displayName
-                        .replace('多巴胺款男款/', '')
-                        .replace('白色黑', '白底印黑色')
-                        .replace('白色綠', '白底印綠色')
-                        .replace('白色粉', '白底印粉色')
-                        .replace('黑色白', '黑底印白色')
-                        .replace('黑色綠', '黑底印綠色')
-                        .replace('黑色粉', '黑底印粉色');
-                }
-                
-                return displayName;
-            };
-
-            const resetProductSelection = () => {
-                selectedMainCategory.value = '';
-                selectedStyle.value = '';
-                selectedProduct.value = null;
-                selectedSize.value = '';
-                selectedQty.value = 0;
-                showNumpad.value = false;
-                numpadValue.value = '';
-            };
-
-            const openNumpad = () => {
-                showNumpad.value = true;
-                numpadValue.value = '';
-            };
-
-            const closeNumpad = () => {
-                showNumpad.value = false;
-                numpadValue.value = '';
-            };
-
-            const numpadInput = (digit) => {
-                if (numpadValue.value.length < 4) {
-                    numpadValue.value += digit;
-                }
-            };
-
-            const numpadBackspace = () => {
-                numpadValue.value = numpadValue.value.slice(0, -1);
-            };
-
-            const numpadClear = () => {
-                numpadValue.value = '';
-            };
-
-            const confirmNumpad = () => {
-                const qty = parseInt(numpadValue.value);
-                if (qty > 0) {
-                    selectedQty.value = qty;
-                    showNumpad.value = false;
-                    numpadValue.value = '';
-                } else {
-                    alert('請輸入有效的數量');
-                }
-            }; // same: 同出貨選項, manual: 手動輸入
-            const addressDisplay = computed(() => {
-                if (addressMode.value === 'manual' && customer.value.address) {
-                    return customer.value.address;
-                }
-                return customer.value.shipping;
-            });
-
-            const convenienceStoreDisplay = computed(() => {
-                const s = customer.value.shipping;
-                if (s === '7-11 便利商店') return '7-11';
-                if (s === '全家 便利商店') return '全家';
-                if (s === 'OK 便利商店') return 'OK';
-                if (s === '萊爾富 便利商店') return '萊爾富';
-                return '-';
-            });
-
-            const addItem = () => {
-                items.value.push({ code: '', name: '', qty: 0, price: 0 });
-            };
-
-            const deleteItem = (index) => {
-                items.value.splice(index, 1);
-            };
-
-            const addProductToOrder = () => {
-                if (!selectedProduct.value || !selectedSize.value || !selectedQty.value) {
-                    alert('請完成所有選擇');
-                    return;
-                }
-                
-                const productName = `${selectedProduct.value.name} ${selectedSize.value}`;
-                const productPrice = selectedProduct.value.prices[selectedSize.value] || 0;
-                const emptyIndex = items.value.findIndex(item => !item.name || item.name.trim() === '');
-                
-                if (emptyIndex !== -1 && emptyIndex < 5) {
-                    items.value[emptyIndex] = {
-                        code: selectedProduct.value.code,
-                        name: productName,
-                        qty: selectedQty.value,
-                        price: productPrice
-                    };
-                } else if (emptyIndex === -1 || emptyIndex >= 5) {
-                    const firstFiveEmpty = items.value.slice(0, 5).findIndex(item => !item.name || item.name.trim() === '');
-                    if (firstFiveEmpty !== -1) {
-                        items.value[firstFiveEmpty] = {
-                            code: selectedProduct.value.code,
-                            name: productName,
-                            qty: selectedQty.value,
-                            price: productPrice
-                        };
-                    } else {
-                        items.value.push({
-                            code: selectedProduct.value.code,
-                            name: productName,
-                            qty: selectedQty.value,
-                            price: productPrice
-                        });
+            const checkSession = () => {
+                const session = sessionStorage.getItem(SESSION_KEY);
+                if (session) {
+                    try {
+                        const data = JSON.parse(session);
+                        if (data.isLoggedIn && data.username) {
+                            isLoggedIn.value = true;
+                            currentUser.value = data.username;
+                        }
+                    } catch (e) {
+                        console.error('Session 解析錯誤', e);
                     }
                 }
-                
-                resetProductSelection();
             };
 
-            const totalAmount = computed(() => {
-                const subtotal = items.value.reduce((sum, item) => sum + (item.qty * item.price), 0);
-                return subtotal + (summary.value.shippingFee || 0);
-            });
+            const handleLogin = () => {
+                errorMessage.value = '';
 
-            const totalQty = computed(() => {
-                return items.value.reduce((sum, item) => sum + (item.qty || 0), 0);
-            });
+                if (username.value === VALID_USERNAME && password.value === VALID_PASSWORD) {
+                    isLoggedIn.value = true;
+                    currentUser.value = username.value;
+                    
+                    sessionStorage.setItem(SESSION_KEY, JSON.stringify({
+                        isLoggedIn: true,
+                        username: username.value,
+                        loginTime: new Date().toISOString()
+                    }));
 
-            const resetData = () => {
-                if(confirm('確定要清空所有資料嗎？')) {
-                    items.value = [{ name: '', qty: 0, price: 0, note: '' }];
+                    password.value = '';
+                } else {
+                    errorMessage.value = '帳號或密碼錯誤，請重新輸入';
+                    password.value = '';
                 }
             };
 
-            const shiftDate = (days) => {
-                const currentStr = order.value.date;
-                const base = currentStr
-                    ? new Date(currentStr.replace(/-/g, '/'))
-                    : new Date();
-                if (isNaN(base.getTime())) return;
-                base.setDate(base.getDate() + days);
-                order.value.date = formatDate(base);
+            const handleLogout = () => {
+                if (confirm('確定要登出嗎？')) {
+                    sessionStorage.removeItem(SESSION_KEY);
+                    isLoggedIn.value = false;
+                    currentUser.value = '';
+                    username.value = '';
+                    password.value = '';
+                    errorMessage.value = '';
+                }
             };
 
-            const prevDate = () => shiftDate(-1);
-            const nextDate = () => shiftDate(1);
-            const handlePrint = () => {
-                const style = document.createElement('style');
-                style.textContent = '@media print { @page { size: A4; } }';
-                document.head.appendChild(style);
-                window.print();
-                document.head.removeChild(style);
+            const goToMain = () => {
+                window.location.href = 'main.html';
             };
 
-            return { 
-                customer, order, items, summary, products, 
-                selectedMainCategory, selectedStyle, selectedProduct, selectedSize, selectedQty, 
-                availableStyles, availableProducts, availableSizes,
-                showNumpad, numpadValue,
-                addItem, deleteItem, addProductToOrder, selectMainCategory, selectStyle, selectProduct, resetProductSelection,
-                openNumpad, closeNumpad, numpadInput, numpadBackspace, numpadClear, confirmNumpad,
-                totalAmount, totalQty, resetData, prevDate, nextDate, 
-                addressMode, addressDisplay, convenienceStoreDisplay, handlePrint,
-                getDisplayName
+            const goToStock = () => {
+                window.location.href = 'stock.html';
+            };
+
+            onMounted(() => {
+                checkSession();
+                if (!isLoggedIn.value && usernameInput.value) {
+                    setTimeout(() => {
+                        usernameInput.value?.focus();
+                    }, 100);
+                }
+            });
+
+            return {
+                username,
+                password,
+                showPassword,
+                isLoggedIn,
+                currentUser,
+                errorMessage,
+                usernameInput,
+                handleLogin,
+                handleLogout,
+                goToMain,
+                goToStock
             };
         }
     }).mount('#app');
